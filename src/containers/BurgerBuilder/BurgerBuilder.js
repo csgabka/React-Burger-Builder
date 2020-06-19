@@ -7,6 +7,7 @@ import OrderSummary from '../../components/Burger/OrderSummary/OrderSummary';
 import Spinner from '../../components/UI/Spinner/Spinner';
 import withErrorHandler from '../../hoc/withErrorHandler/withErrorHandler';
 import axios from '../../axios-orders';
+import { Redirect } from 'react-router-dom';
 
 const INGREDIENT_PRICES = {
   salad: 0.5,
@@ -91,27 +92,16 @@ class BurgerBuilder extends Component {
   }
 
   purchaseContinueHandler = () => {
-    this.setState({loading: true});
-    const order = {
-      ingredients: this.state.ingredients,
-      price: this.state.totalPrice,
-      customer: {
-        name: 'Gabika',
-        address: {
-          street: 'Main street 1',
-          postCode: 'E1269523',
-          country: 'New Zealand'
-        },
-        email: 'test@tester.test'
-      },
-      deliveryMethod: 'fastest'
+
+    const queryParams = [];
+    for (let i in this.state.ingredients) {
+      queryParams.push(encodeURIComponent(i) + '=' + encodeURIComponent(this.state.ingredients[i]));
     }
-    axios.post('/orders.json', order)
-    .then(response => {
-      this.setState({loading: false, purchasing: false});
-    })
-    .catch(error => {
-      this.setState({loading: false, purchasing: false});
+    queryParams.push('price=' + this.state.totalPrice);
+    const queryString = queryParams.join('&');
+    this.props.history.push({
+      pathname: '/checkout',
+      search: '?' + queryString
     });
     }
 
@@ -151,12 +141,19 @@ class BurgerBuilder extends Component {
       orderSummary = <Spinner />;
     }
 
+    let checkout = null;
+    if (this.state.checkout) {
+      checkout = <Redirect to="/checkout"/>;
+    }
+
+
     return (
         <Auxilliary>
           <Modal show={this.state.purchasing} modalClosed={this.purchaseCancelHandler}>
             {orderSummary}
           </Modal>
           {burger}
+          {checkout}
       </Auxilliary>
     );
   }
